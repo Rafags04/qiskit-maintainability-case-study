@@ -1,43 +1,45 @@
 # Qiskit Maintainability Case Study: Quantum Algorithms
 
-This repository provides a modular, maintainable, and mathematically rigorous implementation in **Python** and **Qiskit** of eight foundational quantum computing algorithms and protocols. Designed as a software engineering and maintainability case study for quantum software systems, each algorithm is decoupled into its own independent module within `algorithms/`, featuring circuit construction primitives, execution pipelines using `AerSimulator`, measurement post-processing, and self-verifying standalone demonstration entry points.
+This project investigates maintainability and software engineering patterns in quantum computing using Qiskit. Quantum software often suffers from common architectural pitfalls: algorithmic logic tightly coupled inside monolithic Jupyter notebooks, hardcoded circuit configurations, reliance on deprecated APIs, and an absence of automated unit tests.
 
-Furthermore, each algorithm is paired with an extensive unit test suite located in `tests/`, fully compatible with both `pytest` and `unittest`.
+To study how standard software engineering practices apply to quantum development, this repository implements eight foundational quantum algorithms as clean, modular Python components. Each algorithm isolates circuit construction, hardware/simulator execution, and classical post-processing, and each is verified with automated tests.
 
 ---
 
-## 📋 Implemented Quantum Algorithms
+## Implemented Algorithms
 
-| Algorithm | Source File | Classical Complexity | Quantum Complexity | Problem Description & Formulation |
+The table below summarizes the algorithms included in this study, comparing their theoretical complexity and outlining the problem each one solves.
+
+| Algorithm | File | Classical | Quantum | Problem Formulation |
 | :--- | :--- | :---: | :---: | :--- |
-| **Bernstein–Vazirani** | [`bernstein_vazirani.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/bernstein_vazirani.py) | $O(n)$ | $O(1)$ | Finds a hidden secret bitstring $s \in \{0, 1\}^n$ from oracle $f(x) = s \cdot x \pmod 2$ in a single query. |
-| **Deutsch–Jozsa** | [`deutsch_jozsa.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/deutsch_jozsa.py) | $O(2^{n-1} + 1)$ | $O(1)$ | Deterministically decides whether a boolean function $f: \{0,1\}^n \to \{0,1\}$ is constant or balanced in 1 query. |
-| **Grover** | [`grover.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/grover.py) | $O(N)$ | $O(\sqrt{N})$ | Unstructured database search over $N = 2^n$ items via iterative amplitude amplification and phase inversion. |
-| **Quantum Phase Estimation (QPE)** | [`quantum_phase_estimation.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/quantum_phase_estimation.py) | - | $O(m^2)$ | Estimates the phase eigenvalue $\theta$ in $U\|\psi\rangle = e^{2\pi i \theta}\|\psi\rangle$ with $m$ bits of precision via inverse QFT. |
-| **Shor** | [`shor.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/shor.py) | $\exp(O(n^{1/3}))$ | $O(n^3)$ | Factors composite integers $N$ into non-trivial prime factors by reducing factorization to order-finding via QPE. |
-| **Simon** | [`simon.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/simon.py) | $\Omega(2^{n/2})$ | $O(n)$ | Recovers the hidden period $s$ of a 2-to-1 function $f(x) = f(y) \iff x \oplus y \in \{0^n, s\}$ via $\mathbb{F}_2$ linear system solving. |
-| **Quantum Teleportation** | [`quantum_teleportation.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/quantum_teleportation.py) | Impossible (No-Cloning) | 1 Bell pair + 2 classical bits | Teleports an arbitrary quantum state $\|\psi\rangle = \alpha\|0\rangle + \beta\|1\rangle$ using dynamic circuits and feed-forward operations. |
-| **TSP (Traveling Salesperson)** | [`tsp.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/tsp.py) | NP-Hard ($O(n!)$ or $O(n^2 2^n)$) | Variational Heuristic (QAOA) | Formulates route optimization as a QUBO/Ising Hamiltonian solved using QAOA and classical COBYLA parameter optimization. |
+| **Bernstein–Vazirani** | [`bernstein_vazirani.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/bernstein_vazirani.py) | $O(n)$ | $O(1)$ | Recovers a hidden bitstring $s \in \{0, 1\}^n$ from oracle $f(x) = s \cdot x \pmod 2$ in a single query. |
+| **Deutsch–Jozsa** | [`deutsch_jozsa.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/deutsch_jozsa.py) | $O(2^{n-1} + 1)$ | $O(1)$ | Determines whether a boolean function $f: \{0,1\}^n \to \{0,1\}$ is constant or balanced with certainty. |
+| **Grover** | [`grover.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/grover.py) | $O(N)$ | $O(\sqrt{N})$ | Searches an unsorted space of $N = 2^n$ elements using amplitude amplification. |
+| **Quantum Phase Estimation (QPE)** | [`quantum_phase_estimation.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/quantum_phase_estimation.py) | - | $O(m^2)$ | Estimates the phase eigenvalue $\theta$ in $U\|\psi\rangle = e^{2\pi i \theta}\|\psi\rangle$ to $m$ bits using inverse QFT. |
+| **Shor** | [`shor.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/shor.py) | $\exp(O(n^{1/3}))$ | $O(n^3)$ | Factors composite integer $N$ by reducing order-finding to phase estimation. Compiled here for $N = 15$. |
+| **Simon** | [`simon.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/simon.py) | $\Omega(2^{n/2})$ | $O(n)$ | Finds hidden period $s$ for a 2-to-1 function where $f(x)=f(y) \iff x \oplus y \in \{0^n, s\}$ via $\mathbb{F}_2$ linear system solving. |
+| **Quantum Teleportation** | [`quantum_teleportation.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/quantum_teleportation.py) | Impossible (No-Cloning) | 1 Bell pair + 2 classical bits | Teleports an arbitrary single-qubit state using Bell measurement and dynamic feed-forward corrections. |
+| **TSP (Traveling Salesperson)** | [`tsp.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/tsp.py) | NP-Hard ($O(n!)$ or $O(n^2 2^n)$) | Variational Heuristic (QAOA) | Solves route optimization by mapping a constrained QUBO to an Ising Hamiltonian optimized via QAOA + COBYLA. |
 
 ---
 
-## 📂 Repository Architecture
+## Project Structure
+
+The project separates algorithm implementations from test suites and entry-point scripts:
 
 ```text
 qiskit-maintainability-case-study/
-│
-├── algorithms/                              # Core algorithmic modules
-│   ├── __init__.py                          # Public API exports
-│   ├── bernstein_vazirani.py                # Bernstein-Vazirani implementation
-│   ├── deutsch_jozsa.py                     # Deutsch-Jozsa implementation
-│   ├── grover.py                            # Grover's search algorithm
-│   ├── quantum_phase_estimation.py          # Quantum Phase Estimation (QPE)
-│   ├── shor.py                              # Shor's integer factorization algorithm
-│   ├── simon.py                             # Simon's algorithm (quantum sampling + GF(2) solver)
-│   ├── quantum_teleportation.py             # Quantum teleportation protocol with dynamic circuits
-│   └── tsp.py                               # Traveling Salesperson Problem via Ising Hamiltonian & QAOA
-│
-├── tests/                                   # Comprehensive unit testing suite
+├── algorithms/
+│   ├── __init__.py                  # Public exports
+│   ├── bernstein_vazirani.py        # Bernstein-Vazirani implementation
+│   ├── deutsch_jozsa.py             # Deutsch-Jozsa implementation
+│   ├── grover.py                    # Grover search & diffusion operators
+│   ├── quantum_phase_estimation.py  # Phase estimation with QFT inverse
+│   ├── shor.py                      # Shor order-finding for N=15
+│   ├── simon.py                     # Simon algorithm + GF(2) Gaussian solver
+│   ├── quantum_teleportation.py     # Dynamic circuit teleportation
+│   └── tsp.py                       # Ising Hamiltonian & QAOA variational solver
+├── tests/
 │   ├── __init__.py
 │   ├── test_bernstein_vazirani.py
 │   ├── test_deutsch_jozsa.py
@@ -47,96 +49,96 @@ qiskit-maintainability-case-study/
 │   ├── test_simon.py
 │   ├── test_quantum_teleportation.py
 │   └── test_tsp.py
-│
-├── main.py                                  # CLI orchestrator and interactive runner
-├── requirements.txt                         # Package dependencies
-└── README.md                                # Technical documentation and publication reference
+├── main.py                          # CLI runner for quick execution
+├── requirements.txt                 # Pinned dependencies
+└── README.md
 ```
 
 ---
 
-## 🚀 Prerequisites and Installation
+## Setup and Installation
 
-The codebase targets **Python 3.10+** and modern **Qiskit (>=1.0.0)** with **Qiskit Aer (>=0.14.0)**.
+Requirements: Python 3.10+ and modern Qiskit (1.0+).
 
-1. **Clone or navigate to the repository:**
-   ```bash
-   cd qiskit-maintainability-case-study
-   ```
+```bash
+git clone https://github.com/Rafags04/qiskit-maintainability-case-study.git
+cd qiskit-maintainability-case-study
+pip install -r requirements.txt
+```
 
-2. **Install required dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+Dependencies include `qiskit`, `qiskit-aer`, `numpy`, `scipy`, and `pytest`.
 
 ---
 
-## 💻 Execution Modes
+## How to Run
 
-### 1. Unified Execution via CLI Orchestrator
-Execute all eight quantum algorithms sequentially with structured console output:
+### Command-line Runner
+
+To run a demonstration of all eight algorithms in sequence:
+
 ```bash
 python main.py
 ```
 
-Run a specific algorithm using the `--algo` argument:
+You can also target an individual algorithm with the `--algo` flag:
+
 ```bash
 python main.py --algo grover
 python main.py --algo shor
 python main.py --algo simon
-python main.py --algo teleportation
 python main.py --algo tsp
 ```
 
 Available options: `bernstein_vazirani`, `deutsch_jozsa`, `grover`, `qpe`, `shor`, `simon`, `teleportation`, `tsp`, `all`.
 
-### 2. Standalone Algorithm Execution
-Every file under `algorithms/` is directly executable and contains a dedicated, self-contained verification routine:
+### Standalone Execution
+
+Each file in `algorithms/` can be run on its own. Every module includes a `__main__` block with sample inputs and verification:
+
 ```bash
-python algorithms/bernstein_vazirani.py
-python algorithms/deutsch_jozsa.py
 python algorithms/grover.py
-python algorithms/quantum_phase_estimation.py
-python algorithms/shor.py
-python algorithms/simon.py
 python algorithms/quantum_teleportation.py
 python algorithms/tsp.py
 ```
 
-### 3. Automated Unit Testing
-The project includes automated unit test suites covering circuit structures, register allocations, theoretical probabilities, boundary conditions, and invalid input validation:
+### Running the Test Suite
 
-- **Using pytest:**
-  ```bash
-  pytest -v
-  ```
+The test suite contains 40 automated tests covering circuit sizes, edge cases (e.g. invalid inputs, injective functions in Simon's algorithm, multi-target search in Grover), and measurement distributions:
 
-- **Using Python's built-in unittest:**
-  ```bash
-  python -m unittest discover tests -v
-  ```
+```bash
+# Using pytest
+pytest -v
 
----
-
-## 🔬 Implementation Highlights & Maintainability Principles
-
-- **Qiskit Modern Dynamic Circuits Support:**
-  In [`quantum_teleportation.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/quantum_teleportation.py), classical feed-forward corrections are realized via `qc.if_test((cr, val))` context managers, adhering to standard Qiskit 1.x / 2.x dynamic circuit specifications without deprecated c_if semantics.
-- **Unitary Synthesis of Inverse QFT:**
-  Inverse quantum Fourier transformations in [`quantum_phase_estimation.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/quantum_phase_estimation.py) and [`shor.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/shor.py) utilize `QFTGate(n).inverse()`, preventing deprecation warnings and ensuring decomposition into elementary basis gates.
-- **Native Linear System Solver over $\mathbb{F}_2$:**
-  In [`simon.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/simon.py), the classical post-processing stage incorporates a native Gaussian elimination routine over the Galois Field $\mathrm{GF}(2)$, accurately distinguishing between 1-to-1 functions (full rank $n$ yielding $s = 0^n$) and 2-to-1 functions (rank $n-1$ yielding non-trivial $s$) without third-party algebraic dependencies.
-- **Rigorous QAOA Mapping for Combinatorial Optimization:**
-  In [`tsp.py`](file:///c:/Users/USUARIO/qiskit-maintainability-case-study/algorithms/tsp.py), the constrained QUBO formulation maps binary variables $x_i \in \{0, 1\}$ to Pauli spin operators $Z_i$ through $x_i = \frac{I - Z_i}{2}$. The corresponding Ising cost Hamiltonian $H_C = \sum_i h_i Z_i + \sum_{i<j} J_{ij} Z_i Z_j$ is evaluated with alternating parameterized unitaries $e^{-i \gamma_l H_C}$ and transverse mixer unitaries $e^{-i \beta_l H_M}$, optimized classically with SciPy's COBYLA.
+# Using standard unittest
+python -m unittest discover tests -v
+```
 
 ---
 
-## 📚 Selected Scientific References
+## Technical Notes and Design Decisions
 
-1. **Bernstein, E., & Vazirani, U.** (1993). *Quantum complexity theory*. Proceedings of the 25th Annual ACM Symposium on Theory of Computing (STOC '93), 11–20.
-2. **Deutsch, D., & Jozsa, R.** (1992). *Rapid solution of problems by quantum computation*. Proceedings of the Royal Society of London. Series A, 439(1907), 553–558.
-3. **Grover, L. K.** (1996). *A fast quantum mechanical algorithm for database search*. Proceedings of the 28th Annual ACM Symposium on Theory of Computing (STOC '96), 212–219.
-4. **Shor, P. W.** (1994). *Algorithms for quantum computation: discrete logarithms and factoring*. Proceedings of 35th Annual Symposium on Foundations of Computer Science (FOCS '94), 124–134.
-5. **Simon, D. R.** (1994). *On the power of quantum computation*. Proceedings of 35th Annual Symposium on Foundations of Computer Science (FOCS '94), 116–123.
-6. **Bennett, C. H., et al.** (1993). *Teleporting an unknown quantum state via dual classical and Einstein-Podolsky-Rosen channels*. Physical Review Letters, 70(13), 1895–1899.
-7. **Farhi, E., Goldstone, J., & Gutmann, S.** (2014). *A Quantum Approximate Optimization Algorithm*. arXiv:1411.4028.
+Here are a few notable implementation choices made during development:
+
+- **Dynamic circuits in Quantum Teleportation (`quantum_teleportation.py`):**
+  Instead of relying on legacy `c_if` gate conditioning (which is deprecated in modern Qiskit), conditional operations use Qiskit's `qc.if_test((classical_bit, value))` context managers. This ensures compatibility with modern runtime targets that support real-time classical feed-forward.
+  
+- **Modular Inverse QFT (`quantum_phase_estimation.py`, `shor.py`):**
+  Rather than writing manual phase-rotation ladders, inverse Fourier transforms use `QFTGate(n).inverse()`. This avoids repetitive code and delegates gate decomposition directly to Qiskit's transpiler passes.
+
+- **Self-contained GF(2) Solver (`simon.py`):**
+  Simon's algorithm requires solving a system of linear equations $y \cdot s = 0 \pmod 2$ over the Galois Field $\mathbb{F}_2$. Instead of pulling in heavy computer algebra libraries like SymPy, we included a straightforward Gaussian elimination routine directly in the module. It handles both 2-to-1 functions (where the matrix has rank $n-1$ and reveals a non-trivial period $s$) and 1-to-1 functions (where the matrix has full rank $n$ and correctly yields $s = 0^n$).
+
+- **Ising Hamiltonian Mapping for QAOA (`tsp.py`):**
+  The traveling salesperson instance is formulated as an unconstrained binary quadratic program (QUBO) for a 3-city tour (with city 0 fixed as start/end, leaving 4 binary variables). We map binary variables $x_i \in \{0, 1\}$ to Pauli operators via $x_i = \frac{I - Z_i}{2}$, producing an Ising Hamiltonian $H_C = \sum h_i Z_i + \sum J_{ij} Z_i Z_j$. The QAOA ansatz applies alternating layers of $e^{-i \gamma H_C}$ and transverse mixer $e^{-i \beta \sum X_i}$, with variational parameters $(\gamma, \beta)$ optimized using SciPy's COBYLA.
+
+---
+
+## References
+
+1. Bernstein, E., & Vazirani, U. (1993). *Quantum complexity theory*. STOC '93, 11–20.
+2. Deutsch, D., & Jozsa, R. (1992). *Rapid solution of problems by quantum computation*. Proc. R. Soc. Lond. A, 439(1907), 553–558.
+3. Grover, L. K. (1996). *A fast quantum mechanical algorithm for database search*. STOC '96, 212–219.
+4. Shor, P. W. (1994). *Algorithms for quantum computation: discrete logarithms and factoring*. FOCS '94, 124–134.
+5. Simon, D. R. (1994). *On the power of quantum computation*. FOCS '94, 116–123.
+6. Bennett, C. H., et al. (1993). *Teleporting an unknown quantum state via dual classical and Einstein-Podolsky-Rosen channels*. Phys. Rev. Lett., 70(13), 1895–1899.
+7. Farhi, E., Goldstone, J., & Gutmann, S. (2014). *A Quantum Approximate Optimization Algorithm*. arXiv:1411.4028.
