@@ -1,7 +1,8 @@
-"""Pruebas unitarias para el Algoritmo de Simon."""
+"""Unit tests for Simon's algorithm."""
 
 import unittest
 from algorithms.simon import (
+    build_simon_oracle,
     build_simon_circuit,
     run_simon,
     solve_simon_linear_system,
@@ -9,29 +10,35 @@ from algorithms.simon import (
 
 
 class TestSimon(unittest.TestCase):
-    """Casos de prueba para el algoritmo de Simon."""
+    """Test suite for Simon's algorithm."""
 
     def test_circuit_qubits(self):
-        """Verifica que el circuito tenga 2*n qubits."""
+        """Verifies that the circuit allocates 2*n qubits and n classical bits."""
         secret = "110"
         qc = build_simon_circuit(secret)
         self.assertEqual(qc.num_qubits, 2 * len(secret))
         self.assertEqual(qc.num_clbits, len(secret))
 
     def test_simon_recovery_n3(self):
-        """Verifica la deduccion correcta de s='110'."""
+        """Verifies correct deduction of s='110'."""
         secret = "110"
         recovered_s, counts, _ = run_simon(secret, shots=1024)
         self.assertEqual(recovered_s, secret)
 
     def test_simon_recovery_n2(self):
-        """Verifica la deduccion de s='11'."""
+        """Verifies correct deduction of s='11'."""
         secret = "11"
         recovered_s, counts, _ = run_simon(secret, shots=1024)
         self.assertEqual(recovered_s, secret)
 
+    def test_simon_all_zero_secret_injective_function(self):
+        """Verifies correct deduction of s='000' for an injective (1-to-1) function."""
+        secret = "000"
+        recovered_s, counts, _ = run_simon(secret, shots=1024)
+        self.assertEqual(recovered_s, secret)
+
     def test_samples_orthogonality(self):
-        """Verifica que todas las mediciones satisfagan y · s = 0 (mod 2)."""
+        """Verifies that all measured samples satisfy y * s = 0 (mod 2)."""
         secret = "101"
         s_bits = [int(b) for b in secret]
         n = len(secret)
@@ -42,8 +49,15 @@ class TestSimon(unittest.TestCase):
             self.assertEqual(
                 dot,
                 0,
-                f"Muestra {sample} viola la condicion y · s = 0 (mod 2) para s={secret}",
+                f"Sample {sample} violates the condition y * s = 0 (mod 2) for s={secret}",
             )
+
+    def test_invalid_secret_raises_error(self):
+        """Verifies that invalid or empty secrets raise ValueError."""
+        with self.assertRaises(ValueError):
+            build_simon_oracle("")
+        with self.assertRaises(ValueError):
+            build_simon_oracle("102")
 
 
 if __name__ == "__main__":

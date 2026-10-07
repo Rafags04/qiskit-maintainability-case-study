@@ -1,14 +1,14 @@
-"""Módulo de Algoritmos Cuánticos implementados en Qiskit.
+"""Quantum Algorithms Module implemented in Qiskit.
 
-Incluye implementaciones modulares, testeables y reproducibles de:
+Provides modular, testable, and reproducible implementations of:
 - Bernstein-Vazirani
 - Deutsch-Jozsa
 - Grover
-- Estimación Cuántica de Fase (Quantum Phase Estimation - QPE)
-- Algoritmo de Shor (Factorización de enteros)
-- Algoritmo de Simon
-- Teletransportación Cuántica (Quantum Teleportation)
-- Problema del Viajante de Comercio (Traveling Salesperson Problem - TSP con QAOA)
+- Quantum Phase Estimation (QPE)
+- Shor (Integer Factorization)
+- Simon
+- Quantum Teleportation
+- Traveling Salesperson Problem (TSP with QAOA)
 """
 
 from .bernstein_vazirani import run_bernstein_vazirani, build_bernstein_vazirani_circuit

@@ -1,14 +1,14 @@
-"""Algoritmo de Deutsch-Jozsa.
+"""Deutsch-Jozsa Algorithm.
 
-Problema:
-Dada una funcion oraculo f: {0,1}^n -> {0,1}, prometida ser o bien constante
-(devuelve 0 para todas las entradas o 1 para todas) o bien balanceada
-(devuelve 0 para exactamente la mitad de las entradas y 1 para la otra mitad).
-El objetivo es determinar si f es constante o balanceada.
+Problem:
+Given a black-box oracle function f: {0,1}^n -> {0,1}, promised to be either
+constant (returns 0 for all inputs or 1 for all inputs) or balanced (returns 0
+for exactly half of the inputs and 1 for the remaining half).
+The objective is to determine whether f is constant or balanced.
 
-Complejidad:
-- Clasica: Requiere en el peor caso 2^(n-1) + 1 consultas.
-- Cuantica: Requiere exactamente 1 consulta con 100% de certeza.
+Complexity:
+- Classical: In the worst case, requires 2^(n-1) + 1 queries.
+- Quantum: Requires exactly 1 query with 100% deterministic certainty.
 """
 
 from typing import Dict, Literal, Tuple
@@ -19,69 +19,80 @@ OracleType = Literal["constant_0", "constant_1", "balanced"]
 
 
 def build_deutsch_jozsa_oracle(n: int, oracle_type: OracleType, mask: int = 1) -> QuantumCircuit:
-    """Construye un subcircuito oraculo para Deutsch-Jozsa.
+    """Constructs an oracle subcircuit for Deutsch-Jozsa.
 
     Args:
-        n: Numero de qubits de entrada.
-        oracle_type: Tipo de oraculo ('constant_0', 'constant_1', 'balanced').
-        mask: Mascara de bits para oraculo balanceado (1 <= mask < 2^n).
+        n: Number of input qubits (n >= 1).
+        oracle_type: Type of oracle ('constant_0', 'constant_1', or 'balanced').
+        mask: Bitmask for the balanced oracle (1 <= mask < 2^n).
 
     Returns:
-        QuantumCircuit: Circuito de (n + 1) qubits que actua como oraculo U_f.
+        QuantumCircuit: An (n + 1)-qubit circuit acting as oracle U_f.
+
+    Raises:
+        ValueError: If n < 1 or oracle_type is invalid.
     """
+    if n < 1:
+        raise ValueError(f"Number of qubits n must be at least 1. Received: {n}")
+
     oracle = QuantumCircuit(n + 1, name=f"oracle_{oracle_type}")
 
     if oracle_type == "constant_0":
-        # f(x) = 0 para todo x: No se aplica ninguna compuerta al qubit ancilla
+        # f(x) = 0 for all x: Identity operation on ancilla
         pass
     elif oracle_type == "constant_1":
-        # f(x) = 1 para todo x: Invierte el qubit ancilla (qubit n)
+        # f(x) = 1 for all x: Inverts ancilla qubit (qubit n)
         oracle.x(n)
     elif oracle_type == "balanced":
-        # f(x) = (mask · x) mod 2: Aplica CNOT desde los qubits indicados en mask hacia el ancilla
-        # Para cualquier mask != 0, exactamente la mitad de los 2^n estados tienen f(x) = 1
+        # f(x) = (mask · x) mod 2: Applies CNOT from qubits indicated by mask to ancilla
+        # For any non-zero mask, exactly 2^(n-1) inputs satisfy f(x) = 1
         effective_mask = mask if (1 <= mask < (1 << n)) else 1
         for i in range(n):
             if (effective_mask >> i) & 1:
                 oracle.cx(i, n)
     else:
-        raise ValueError(f"oracle_type desconocido: '{oracle_type}'. Use 'constant_0', 'constant_1' o 'balanced'.")
+        raise ValueError(
+            f"Unknown oracle_type: '{oracle_type}'. Use 'constant_0', 'constant_1', or 'balanced'."
+        )
 
     return oracle
 
 
 def build_deutsch_jozsa_circuit(n: int, oracle: QuantumCircuit) -> QuantumCircuit:
-    """Construye el circuito completo para el algoritmo de Deutsch-Jozsa.
+    """Builds the complete circuit for the Deutsch-Jozsa algorithm.
 
     Args:
-        n: Numero de qubits del registro de entrada.
-        oracle: Subcircuito de (n + 1) qubits correspondiente a la funcion f.
+        n: Number of qubits in the input register.
+        oracle: Subcircuit of (n + 1) qubits implementing function f.
 
     Returns:
-        QuantumCircuit: Circuito listo para ejecucion con medicion en el registro de entrada.
+        QuantumCircuit: Ready-to-run circuit with measurement on the input register.
     """
+    if n < 1:
+        raise ValueError(f"Number of qubits n must be at least 1. Received: {n}")
+
     qr_input = QuantumRegister(n, name="q_in")
     qr_ancilla = QuantumRegister(1, name="q_anc")
     cr = ClassicalRegister(n, name="c_out")
     qc = QuantumCircuit(qr_input, qr_ancilla, cr)
 
-    # 1. Preparacion del ancilla en el estado |->
+    # 1. Prepare ancilla qubit in the |-> state
     qc.x(qr_ancilla[0])
     qc.h(qr_ancilla[0])
 
-    # 2. Superposicion en los qubits de entrada |+>^n
+    # 2. Prepare input register in uniform superposition |+>^n
     qc.h(qr_input)
     qc.barrier()
 
-    # 3. Aplicacion del oraculo
+    # 3. Apply the oracle
     qc.compose(oracle, qubits=list(range(n + 1)), inplace=True)
     qc.barrier()
 
-    # 4. Transformada Hadamard inversa en qubits de entrada
+    # 4. Apply inverse Hadamard transform to input qubits
     qc.h(qr_input)
     qc.barrier()
 
-    # 5. Medicion del registro de entrada
+    # 5. Measure input register
     qc.measure(qr_input, cr)
 
     return qc
@@ -93,19 +104,19 @@ def run_deutsch_jozsa(
     mask: int = 1,
     shots: int = 1024,
 ) -> Tuple[str, Dict[str, int], QuantumCircuit]:
-    """Ejecuta el algoritmo de Deutsch-Jozsa y clasifica la funcion.
+    """Executes the Deutsch-Jozsa algorithm and classifies the oracle function.
 
     Args:
-        n: Numero de bits de entrada.
-        oracle_type: 'constant_0', 'constant_1' o 'balanced'.
-        mask: Mascara para el caso balanceado.
-        shots: Numero de tomas de simulacion.
+        n: Number of input bits.
+        oracle_type: 'constant_0', 'constant_1', or 'balanced'.
+        mask: Bitmask for the balanced case.
+        shots: Number of simulation shots.
 
     Returns:
         Tuple[str, Dict[str, int], QuantumCircuit]:
-            - Clasificacion: 'constant' o 'balanced'.
-            - Conteos de medicion obtenidos.
-            - Circuito ejecutado.
+            - Classification: 'constant' or 'balanced'.
+            - Measurement counts obtained.
+            - Executed circuit.
     """
     oracle = build_deutsch_jozsa_oracle(n, oracle_type=oracle_type, mask=mask)
     qc = build_deutsch_jozsa_circuit(n, oracle)
@@ -115,7 +126,7 @@ def run_deutsch_jozsa(
     result = simulator.run(transpiled_qc, shots=shots).result()
     counts = result.get_counts()
 
-    # Si todas las mediciones dan '0'*n, f es constante; de lo contrario es balanceada
+    # If 100% of measurements yield '0'*n, f is constant; otherwise balanced
     all_zeros = "0" * n
     is_constant = all_zeros in counts and counts[all_zeros] == shots
     classification = "constant" if is_constant else "balanced"
@@ -126,13 +137,15 @@ def run_deutsch_jozsa(
 if __name__ == "__main__":
     n_bits = 4
     print("=" * 60)
-    print(f"EJECUCION: Algoritmo de Deutsch-Jozsa (n = {n_bits} qubits)")
+    print(f"EXECUTION: Deutsch-Jozsa Algorithm (n = {n_bits} qubits)")
     print("=" * 60)
 
     for o_type in ["constant_0", "constant_1", "balanced"]:
         verdict, raw_counts, circuit = run_deutsch_jozsa(n_bits, oracle_type=o_type, mask=0b1011)
         expected = "constant" if "constant" in o_type else "balanced"
-        print(f"Tipo probado: {o_type:<12} | Resultado: {verdict:<10} | Esperado: {expected:<10} | Correcto: {verdict == expected}")
-        print(f"  Conteos: {raw_counts}")
+        print(
+            f"Tested: {o_type:<12} | Result: {verdict:<10} | Expected: {expected:<10} | Correct: {verdict == expected}"
+        )
+        print(f"  Counts: {raw_counts}")
 
     print("=" * 60)

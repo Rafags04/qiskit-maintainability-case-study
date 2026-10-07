@@ -1,18 +1,18 @@
-"""Algoritmo de Shor para Factorizacion de Enteros.
+"""Shor's Algorithm for Integer Factorization.
 
-Problema:
-Dado un numero entero compuesto N, encontrar sus factores primos no triviales p y q
-tales que N = p * q.
+Problem:
+Given a composite integer N, find its non-trivial prime factors p and q
+such that N = p * q.
 
-Reduccion al Problema del Periodo (Order Finding):
-Para un entero 'a' coprimo con N (gcd(a, N) = 1), el periodo r es el menor entero positivo
-tal que a^r = 1 (mod N).
-Si r es par y a^(r/2) != -1 (mod N), entonces gcd(a^(r/2) - 1, N) y gcd(a^(r/2) + 1, N)
-son factores no triviales de N.
+Reduction to Order Finding:
+For an integer 'a' coprime to N (gcd(a, N) = 1), the order (period) r is the
+smallest positive integer such that a^r = 1 (mod N).
+If r is even and a^(r/2) != -1 (mod N), then gcd(a^(r/2) - 1, N) and
+gcd(a^(r/2) + 1, N) yield non-trivial factors of N.
 
-Complejidad:
-- Clasica: Subexponencial (Criba de Campos de Numeros General - GNFS: exp(O(n^(1/3)))).
-- Cuantica: Polinomial O(n^3) donde n = log2(N) bits.
+Complexity:
+- Classical: Subexponential (General Number Field Sieve - GNFS: exp(O(n^(1/3)))).
+- Quantum: Polynomial O(n^3) where n = log2(N) bits.
 """
 
 from fractions import Fraction
@@ -24,21 +24,26 @@ from qiskit_aer import AerSimulator
 
 
 def c_amod15(a: int, power: int) -> QuantumCircuit:
-    """Construye la compuerta controlada de multiplicacion modular para N = 15:
+    """Constructs the controlled modular multiplication gate for N = 15:
     C-U^(power) |y> = |(a^power * y) mod 15>.
 
     Args:
-        a: Base coprima con 15 (2, 4, 7, 8, 11, 13, 14).
-        power: Exponente al cual se eleva 'a'.
+        a: Base coprime to 15 (2, 4, 7, 8, 11, 13, 14).
+        power: Exponent to which 'a' is raised.
 
     Returns:
-        ControlledGate: Compuerta controlada sobre 1 qubit de control + 4 qubits auxiliares.
+        ControlledGate: Controlled gate over 1 control qubit + 4 work qubits.
+
+    Raises:
+        ValueError: If 'a' is not coprime to 15 or not in the supported list.
     """
     if a not in [2, 4, 7, 8, 11, 13, 14]:
-        raise ValueError(f"'a' debe ser coprimo con 15 y pertenecer a [2, 4, 7, 8, 11, 13, 14]. Recibido: {a}")
+        raise ValueError(
+            f"'a' must be coprime to 15 and belong to [2, 4, 7, 8, 11, 13, 14]. Received: {a}"
+        )
 
     qc = QuantumCircuit(4, name=f"{a}^{power} mod 15")
-    # Reducir power modulo el orden maximo de multiplicacion en mod 15 (periodo maximo = 4)
+    # Reduce power modulo the maximum order in mod 15 (maximum order = 4)
     effective_power = power % 4
 
     for _ in range(effective_power):
@@ -66,38 +71,44 @@ def c_amod15(a: int, power: int) -> QuantumCircuit:
 
 
 def build_shor_circuit(a: int = 7, n_count: int = 4) -> QuantumCircuit:
-    """Construye el circuito cuantico de busqueda de orden para N = 15.
+    """Builds the quantum order-finding circuit for N = 15.
 
     Args:
-        a: Base coprima (por defecto 7).
-        n_count: Numero de qubits de conteo para la fase QPE.
+        a: Coprime base (default 7).
+        n_count: Number of counting qubits for the QPE phase register.
 
     Returns:
-        QuantumCircuit: Circuito cuantico configurado.
+        QuantumCircuit: Configured quantum circuit.
+
+    Raises:
+        ValueError: If n_count < 1.
     """
+    if n_count < 1:
+        raise ValueError(f"n_count must be at least 1. Received: {n_count}")
+
     qr_count = QuantumRegister(n_count, name="q_count")
     qr_work = QuantumRegister(4, name="q_work")
     cr = ClassicalRegister(n_count, name="c_phase")
     qc = QuantumCircuit(qr_count, qr_work, cr)
 
-    # 1. Superposicion uniforme en el registro de conteo
+    # 1. Initialize counting register in uniform superposition
     qc.h(qr_count)
 
-    # 2. Inicializar el registro de trabajo en el estado |1> (binario 0001)
+    # 2. Initialize work register to computational basis state |1> (binary 0001)
     qc.x(qr_work[0])
     qc.barrier()
 
-    # 3. Exponenciacion modular controlada a^(2^j) mod 15
+    # 3. Controlled modular exponentiation a^(2^j) mod 15
     for j in range(n_count):
         c_gate = c_amod15(a, 2**j)
         qc.append(c_gate, [qr_count[j]] + list(qr_work))
     qc.barrier()
 
-    # 4. Transformada Cuantica de Fourier Inversa en el registro de conteo
+    # 4. Inverse Quantum Fourier Transform on counting register
     qc.append(QFTGate(n_count).inverse(), qr_count)
     qc.barrier()
 
-    # 5. Medir el registro de conteo
+    # 5. Measure counting register
     qc.measure(qr_count, cr)
 
     return qc
@@ -109,27 +120,32 @@ def run_shor(
     n_count: int = 4,
     shots: int = 1024,
 ) -> Tuple[Set[int], List[int], Dict[str, int], QuantumCircuit]:
-    """Ejecuta el algoritmo de Shor completo (cuantico + clasico) para factorizar N = 15.
+    """Executes the full Shor algorithm (quantum order-finding + classical post-processing) for N = 15.
 
     Args:
-        a: Base coprima seleccionada (ej. 7).
-        N: Numero a factorizar (15).
-        n_count: Precision en qubits del registro de fase.
-        shots: Numero de tomas de simulacion.
+        a: Chosen coprime base (e.g. 7).
+        N: Number to factor (15).
+        n_count: Phase register precision in qubits.
+        shots: Number of simulation shots.
 
     Returns:
         Tuple[Set[int], List[int], Dict[str, int], QuantumCircuit]:
-            - Conjunto de factores primos no triviales encontrados (ej. {3, 5}).
-            - Lista de candidatos de periodo r evaluados.
-            - Diccionario de conteos de fase.
-            - Circuito ejecutado.
+            - Set of non-trivial prime factors found (e.g. {3, 5}).
+            - List of candidate periods r evaluated.
+            - Phase register measurement counts.
+            - Executed circuit.
+
+    Raises:
+        NotImplementedError: If N != 15.
     """
     if N != 15:
-        raise NotImplementedError("La construccion de compuertas modulares de este modulo esta optimizada para N=15.")
+        raise NotImplementedError(
+            "Modular exponentiation gates in this implementation are compiled for N=15."
+        )
 
     common_factor = math.gcd(a, N)
     if common_factor > 1:
-        # Caso afortunado clasico: 'a' ya comparte un factor con N
+        # Classical lucky case: 'a' already shares a non-trivial factor with N
         factors = {common_factor, N // common_factor}
         qc = QuantumCircuit(1)
         return factors, [1], {}, qc
@@ -145,15 +161,14 @@ def run_shor(
     for bitstring in counts:
         decimal = int(bitstring, 2)
         phase = decimal / (2**n_count)
-        # Aproximar fase mediante fracciones continuas
+        # Approximate phase using continued fractions expansion
         frac = Fraction(phase).limit_denominator(N)
         r_candidate = frac.denominator
 
         if r_candidate not in periods_tested:
             periods_tested.append(r_candidate)
 
-        # Probar si r_candidate es un periodo valido
-        # Tambien probar múltiplos por si la fraccion simplifico factores comunes
+        # Test if r_candidate or its double is the true period
         for mult in [1, 2]:
             r = r_candidate * mult
             if pow(a, r, N) == 1 and (r % 2 == 0):
@@ -173,12 +188,12 @@ if __name__ == "__main__":
     N_test = 15
     a_test = 7
     print("=" * 60)
-    print(f"EJECUCION: Algoritmo de Shor (Factorizando N = {N_test} con base a = {a_test})")
+    print(f"EXECUTION: Shor's Algorithm (Factoring N = {N_test} with base a = {a_test})")
     print("=" * 60)
 
     factors, tested_r, raw_counts, circuit = run_shor(a=a_test, N=N_test)
-    print(f"Conteos del circuito de fase: {raw_counts}")
-    print(f"Periodos 'r' deducidos: {tested_r}")
-    print(f"Factores no triviales hallados: {factors}")
-    print(f"¿Factorizacion completa?: {factors == {3, 5}}")
+    print(f"Phase circuit counts:      {raw_counts}")
+    print(f"Tested periods 'r':        {tested_r}")
+    print(f"Non-trivial factors found: {factors}")
+    print(f"Factorization complete?    {factors == {3, 5}}")
     print("=" * 60)

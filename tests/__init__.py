@@ -1,1 +1,1 @@
-"""Suite de pruebas unitarias para algoritmos cuanticos implementados en Qiskit."""
+"""Unit test suite for quantum algorithms implemented in Qiskit."""

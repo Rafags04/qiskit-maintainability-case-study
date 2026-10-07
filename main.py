@@ -1,14 +1,14 @@
-"""Punto de entrada principal del proyecto de Algoritmos Cuanticos en Qiskit.
+"""Main entry point for the Qiskit Quantum Algorithms repository.
 
-Permite ejecutar demostraciones interactivas de los 8 algoritmos:
+Provides demonstration runners for the 8 implemented quantum algorithms:
 1. Bernstein-Vazirani
 2. Deutsch-Jozsa
-3. Grover
+3. Grover (Quantum Search)
 4. Quantum Phase Estimation (QPE)
-5. Shor (Factorizacion de enteros)
+5. Shor (Integer Factorization)
 6. Simon
-7. Teletransportacion Cuantica
-8. TSP (Problema del Viajante de Comercio con QAOA)
+7. Quantum Teleportation
+8. Traveling Salesperson Problem (TSP with QAOA)
 """
 
 import argparse
@@ -32,97 +32,103 @@ def header(title: str):
 
 
 def demo_bernstein_vazirani():
-    header("1. Algoritmo de Bernstein-Vazirani")
+    header("1. Bernstein-Vazirani Algorithm")
     secret = "101101"
-    print(f"Problema: Hallar la cadena secreta s con f(x) = s · x (mod 2)")
-    print(f"Cadena secreta objetivo: '{secret}'")
+    print("Problem: Find hidden secret string s such that f(x) = s * x (mod 2)")
+    print(f"Target secret string: '{secret}'")
     recovered, counts, qc = run_bernstein_vazirani(secret)
-    print(f"Cadena recuperada:       '{recovered}'")
-    print(f"Total qubits: {qc.num_qubits} | Conteos: {counts}")
-    print(f"Estado: {'EXITOSO' if recovered == secret else 'FALLIDO'}")
+    print(f"Recovered bitstring:  '{recovered}'")
+    print(f"Total qubits: {qc.num_qubits} | Measurement counts: {counts}")
+    print(f"Status: {'SUCCESS' if recovered == secret else 'FAILED'}")
 
 
 def demo_deutsch_jozsa():
-    header("2. Algoritmo de Deutsch-Jozsa")
-    print("Problema: Determinar si f(x) es constante o balanceada en 1 sola consulta")
+    header("2. Deutsch-Jozsa Algorithm")
+    print("Problem: Determine if f(x) is constant or balanced in a single quantum query")
     for o_type in ["constant_0", "constant_1", "balanced"]:
         verdict, counts, _ = run_deutsch_jozsa(n=4, oracle_type=o_type, mask=0b1011)
         expected = "constant" if "constant" in o_type else "balanced"
-        print(f"  Oraculo: {o_type:<12} -> Clasificado: {verdict:<10} (Esperado: {expected:<10}) [OK: {verdict == expected}]")
+        print(
+            f"  Oracle: {o_type:<12} -> Classified: {verdict:<10} "
+            f"(Expected: {expected:<10}) [OK: {verdict == expected}]"
+        )
 
 
 def demo_grover():
-    header("3. Algoritmo de Grover (Busqueda Cuantica)")
+    header("3. Grover Algorithm (Quantum Search)")
     target = "110"
     n_qubits = 3
-    print(f"Problema: Encontrar el estado '{target}' en un espacio de 2^{n_qubits} = {2**n_qubits} elementos")
+    print(f"Problem: Locate state '{target}' in a search space of 2^{n_qubits} = {2**n_qubits} items")
     best_str, prob, counts, qc = run_grover(target, n=n_qubits)
-    print(f"Estado con mayor probabilidad: '{best_str}'")
-    print(f"Probabilidad de exito observada: {prob * 100:.2f}%")
-    print(f"Total qubits: {qc.num_qubits} | Iteraciones optimas: 2")
-    print(f"Estado: {'EXITOSO' if best_str == target and prob > 0.9 else 'FALLIDO'}")
+    print(f"Most frequent state:         '{best_str}'")
+    print(f"Observed success probability: {prob * 100:.2f}%")
+    print(f"Total qubits: {qc.num_qubits} | Optimal iterations: 2")
+    print(f"Status: {'SUCCESS' if best_str == target and prob > 0.9 else 'FAILED'}")
 
 
 def demo_qpe():
-    header("4. Estimacion Cuantica de Fase (QPE)")
+    header("4. Quantum Phase Estimation (QPE)")
     theta_true = 0.625  # 5/8
     m_qubits = 4
-    print(f"Problema: Estimar theta en U|psi> = e^(2*pi*i*theta)|psi> para theta = {theta_true} (5/8)")
+    print(f"Problem: Estimate theta in U|psi> = e^(2*pi*i*theta)|psi> for theta = {theta_true} (5/8)")
     est, err, bitstr, counts, qc = run_qpe(theta_true, num_counting_qubits=m_qubits)
-    print(f"Registro medido: '{bitstr}' (decimal {int(bitstr, 2)})")
-    print(f"Fase estimada:   {est:.5f} (Error absoluto: {err:.5f})")
-    print(f"Total qubits: {qc.num_qubits} ({m_qubits} conteo + 1 estado propio)")
-    print(f"Estado: {'EXITOSO' if err < 1e-5 else 'FALLIDO'}")
+    print(f"Measured register: '{bitstr}' (decimal {int(bitstr, 2)})")
+    print(f"Estimated phase:   {est:.5f} (Absolute error: {err:.5f})")
+    print(f"Total qubits: {qc.num_qubits} ({m_qubits} counting + 1 eigenstate)")
+    print(f"Status: {'SUCCESS' if err < 1e-5 else 'FAILED'}")
 
 
 def demo_shor():
-    header("5. Algoritmo de Shor (Factorizacion de Enteros)")
+    header("5. Shor Algorithm (Integer Factorization)")
     N = 15
     a = 7
-    print(f"Problema: Factorizar N = {N} usando la base coprima a = {a}")
+    print(f"Problem: Factor composite integer N = {N} using coprime base a = {a}")
     factors, periods, counts, qc = run_shor(a=a, N=N)
-    print(f"Periodos r evaluados: {periods}")
-    print(f"Factores primos no triviales encontrados: {sorted(list(factors))}")
-    print(f"Total qubits en circuito: {qc.num_qubits}")
-    print(f"Estado: {'EXITOSO' if factors == {3, 5} else 'FALLIDO'}")
+    print(f"Evaluated periods r: {periods}")
+    print(f"Non-trivial prime factors discovered: {sorted(list(factors))}")
+    print(f"Total circuit qubits: {qc.num_qubits}")
+    print(f"Status: {'SUCCESS' if factors == {3, 5} else 'FAILED'}")
 
 
 def demo_simon():
-    header("6. Algoritmo de Simon")
+    header("6. Simon Algorithm")
     secret = "110"
-    print(f"Problema: Encontrar s in {{0,1}}^n tal que f(x) = f(y) <=> x (+) y in {{0^n, s}}")
-    print(f"Cadena secreta s configurada: '{secret}'")
+    print("Problem: Find s in {0,1}^n such that f(x) = f(y) <=> x (+) y in {0^n, s}")
+    print(f"Configured secret string s: '{secret}'")
     recovered, counts, qc = run_simon(secret)
-    print(f"Cadena secreta deducida:      '{recovered}'")
+    print(f"Deduced secret string:      '{recovered}'")
     print(f"Total qubits: {qc.num_qubits} (2*n)")
-    print(f"Estado: {'EXITOSO' if recovered == secret else 'FALLIDO'}")
+    print(f"Status: {'SUCCESS' if recovered == secret else 'FAILED'}")
 
 
 def demo_teleportation():
-    header("7. Protocolo de Teletransportacion Cuantica")
+    header("7. Quantum Teleportation Protocol")
     theta, phi = 1.25, 0.45
-    print(f"Problema: Teletransportar |psi> = Ry({theta}) Rz({phi}) |0> de Alice a Bob")
+    print(f"Problem: Teleport |psi> = Ry({theta}) Rz({phi}) |0> from Alice to Bob")
     fid, counts, qc = run_teleportation(theta=theta, phi=phi, verify_with_inverse=True)
-    print(f"Fidelidad de transmision comprobada por Bob: {fid * 100:.2f}%")
-    print(f"Total qubits: {qc.num_qubits} (Alice: 2, Bob: 1) con medicion dinamica y correcciones condicionales")
-    print(f"Estado: {'EXITOSO' if fid >= 0.99 else 'FALLIDO'}")
+    print(f"Transmission fidelity verified by Bob: {fid * 100:.2f}%")
+    print(
+        f"Total qubits: {qc.num_qubits} (Alice: 2, Bob: 1) with dynamic measurement "
+        "and feed-forward corrections"
+    )
+    print(f"Status: {'SUCCESS' if fid >= 0.99 else 'FAILED'}")
 
 
 def demo_tsp():
-    header("8. Problema del Viajante de Comercio (TSP) con QAOA")
+    header("8. Traveling Salesperson Problem (TSP) with QAOA")
     distances = np.array([
         [0, 10, 30],
         [20, 0, 15],
         [12, 25, 0],
     ])
-    print("Problema: Encontrar el ciclo hamiltoniano de menor distancia para 3 ciudades")
-    print(f"Matriz de distancias:\n{distances}")
+    print("Problem: Find minimum-distance closed Hamiltonian cycle for 3 cities")
+    print(f"Distance matrix:\n{distances}")
     route, dist, counts, qc = run_tsp_qaoa(distances, p=1, maxiter=30)
-    route_str = " -> ".join(f"Ciudad {c}" for c in route)
-    print(f"Ruta optima QAOA: {route_str}")
-    print(f"Distancia minima encontrada: {dist} (Optimo global teorico: 37.0)")
-    print(f"Qubits en el ansatz QAOA: {qc.num_qubits}")
-    print(f"Estado: {'EXITOSO' if dist == 37.0 else 'FALLIDO'}")
+    route_str = " -> ".join(f"City {c}" for c in route)
+    print(f"Optimal QAOA route: {route_str}")
+    print(f"Minimum distance found: {dist} (Theoretical global optimum: 37.0)")
+    print(f"QAOA ansatz qubits: {qc.num_qubits}")
+    print(f"Status: {'SUCCESS' if dist == 37.0 else 'FAILED'}")
 
 
 DEMOS = {
@@ -138,17 +144,17 @@ DEMOS = {
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Ejecutor de Algoritmos Cuanticos en Qiskit")
+    parser = argparse.ArgumentParser(description="Quantum Algorithms Runner in Qiskit")
     parser.add_argument(
         "--algo",
         choices=list(DEMOS.keys()) + ["all"],
         default="all",
-        help="Algoritmo a ejecutar (por defecto: all)",
+        help="Algorithm to execute (default: all)",
     )
     args = parser.parse_args()
 
     print("\n" + "#" * 75)
-    print("   PROYECTO: ESTUDIO DE ALGORITMOS CUANTICOS EN QISKIT")
+    print("   PROJECT: QUANTUM ALGORITHMS STUDY IN QISKIT")
     print("   Maintainability & Modular Quantum Computing Case Study")
     print("#" * 75)
 
@@ -159,7 +165,7 @@ def main():
         DEMOS[args.algo]()
 
     print("\n" + "#" * 75)
-    print("   TODAS LAS EJECUCIONES FINALIZARON SATISFACTORIAMENTE")
+    print("   ALL ALGORITHMIC RUNS COMPLETED SUCCESSFULLY")
     print("#" * 75 + "\n")
 
 

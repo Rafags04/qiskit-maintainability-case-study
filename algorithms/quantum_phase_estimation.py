@@ -1,13 +1,13 @@
-"""Algoritmo de Estimacion Cuantica de Fase (Quantum Phase Estimation - QPE).
+"""Quantum Phase Estimation (QPE) Algorithm.
 
-Problema:
-Dada una operacion unitaria U y uno de sus estados propios |psi> tal que:
-    U |psi> = e^(2*pi*i*theta) |psi>   con theta in [0, 1)
-el objetivo es estimar el valor del parametro de fase theta con m bits de precision.
+Problem:
+Given a unitary operator U and an eigenstate |psi> such that:
+    U |psi> = e^(2*pi*i*theta) |psi>   with theta in [0, 1)
+the goal is to estimate the phase parameter theta with m bits of precision.
 
-Complejidad:
-- Fundamental para algoritmos cuanticos exponenciales como el Algoritmo de Shor
-  y algoritmos de quimica cuantica / simulacion hamiltoniana.
+Complexity:
+- Foundational quantum algorithmic primitive for Shor's factoring algorithm,
+  HHL (linear systems solver), quantum chemistry, and Hamiltonian simulation.
 """
 
 from typing import Dict, Tuple
@@ -21,19 +21,26 @@ def build_qpe_circuit(
     theta: float,
     num_counting_qubits: int = 3,
 ) -> QuantumCircuit:
-    """Construye el circuito de Estimacion Cuantica de Fase para un operador de fase P(2*pi*theta)
-    con estado propio |1>.
+    """Constructs the Quantum Phase Estimation circuit for a phase gate P(2*pi*theta)
+    with eigenstate |1>.
 
     Args:
-        theta: Fase verdadera a estimar (en el rango [0, 1)).
-        num_counting_qubits: Numero m de qubits en el registro de conteo (precision = 2^-m).
+        theta: True phase to estimate (in range [0, 1)).
+        num_counting_qubits: Number m of counting qubits (precision = 2^-m, m >= 1).
 
     Returns:
-        QuantumCircuit: Circuito listo para simular.
+        QuantumCircuit: Quantum circuit configured for simulation.
+
+    Raises:
+        ValueError: If num_counting_qubits < 1.
     """
-    if not (0.0 <= theta < 1.0):
-        # Normalizar theta al rango [0, 1)
-        theta = theta % 1.0
+    if num_counting_qubits < 1:
+        raise ValueError(
+            f"num_counting_qubits must be at least 1. Received: {num_counting_qubits}"
+        )
+
+    # Normalize theta to [0, 1)
+    theta = theta % 1.0
 
     m = num_counting_qubits
     qr_count = QuantumRegister(m, name="q_count")
@@ -41,27 +48,26 @@ def build_qpe_circuit(
     cr = ClassicalRegister(m, name="c_out")
     qc = QuantumCircuit(qr_count, qr_target, cr)
 
-    # 1. Preparar el estado propio |psi> = |1> en el qubit objetivo
+    # 1. Prepare target eigenstate |psi> = |1>
     qc.x(qr_target[0])
 
-    # 2. Inicializar el registro de conteo en superposicion uniforme |+>^m
+    # 2. Initialize counting register in uniform superposition |+>^m
     qc.h(qr_count)
     qc.barrier()
 
-    # 3. Aplicar operaciones unitarias controladas C-U^(2^j)
-    # U = PhaseGate(lambda) con lambda = 2 * pi * theta
-    # U^(2^j) = PhaseGate(2^j * 2 * pi * theta)
+    # 3. Apply controlled unitary operations C-U^(2^j)
+    # Here U = PhaseGate(2*pi*theta), hence U^(2^j) = PhaseGate(2^j * 2*pi*theta)
     angle = 2 * np.pi * theta
     for j in range(m):
         power = 2**j
         qc.cp(angle * power, qr_count[j], qr_target[0])
     qc.barrier()
 
-    # 4. Transformada Cuantica de Fourier Inversa (QFT^\dagger) sobre el registro de conteo
+    # 4. Apply inverse Quantum Fourier Transform (QFT^\dagger) to counting register
     qc.append(QFTGate(m).inverse(), qr_count)
     qc.barrier()
 
-    # 5. Medicion del registro de conteo
+    # 5. Measure counting register
     qc.measure(qr_count, cr)
 
     return qc
@@ -72,20 +78,20 @@ def run_qpe(
     num_counting_qubits: int = 3,
     shots: int = 1024,
 ) -> Tuple[float, float, str, Dict[str, int], QuantumCircuit]:
-    """Ejecuta QPE y estima la fase theta a partir del conteo mas frecuente.
+    """Executes QPE and estimates the phase theta from the most frequent bitstring.
 
     Args:
-        theta: Fase verdadera en [0, 1).
-        num_counting_qubits: Qubits de medicion (m).
-        shots: Numero de tomas de medicion.
+        theta: True phase in [0, 1).
+        num_counting_qubits: Number of measurement qubits (m).
+        shots: Number of measurement shots.
 
     Returns:
         Tuple[float, float, str, Dict[str, int], QuantumCircuit]:
-            - Fase estimada (theta_est).
-            - Error absoluto (|theta - theta_est|).
-            - Cadena binaria dominante.
-            - Diccionario de conteos.
-            - Circuito ejecutado.
+            - Estimated phase (theta_est).
+            - Absolute estimation error (|theta - theta_est|).
+            - Dominant bitstring measured.
+            - Full measurement counts dictionary.
+            - Executed circuit.
     """
     qc = build_qpe_circuit(theta, num_counting_qubits=num_counting_qubits)
     simulator = AerSimulator()
@@ -95,7 +101,7 @@ def run_qpe(
     best_bitstring = max(counts, key=counts.get)
     decimal_val = int(best_bitstring, 2)
     theta_estimated = decimal_val / (2**num_counting_qubits)
-    error = abs(theta - theta_estimated)
+    error = abs((theta % 1.0) - theta_estimated)
 
     return theta_estimated, error, best_bitstring, counts, qc
 
@@ -109,11 +115,14 @@ if __name__ == "__main__":
     ]
 
     print("=" * 65)
-    print("EJECUCION: Algoritmo de Estimacion Cuantica de Fase (QPE)")
+    print("EXECUTION: Quantum Phase Estimation (QPE)")
     print("=" * 65)
 
     for true_theta, m_qubits in test_cases:
         est, err, bitstr, raw_counts, circuit = run_qpe(true_theta, num_counting_qubits=m_qubits)
-        print(f"Theta real: {true_theta:<8.5f} | m={m_qubits} | Binario: '{bitstr}' | Estimado: {est:.5f} | Error: {err:.5f}")
+        print(
+            f"True theta: {true_theta:<8.5f} | m={m_qubits} | Binary: '{bitstr}' | "
+            f"Estimated: {est:.5f} | Error: {err:.5f}"
+        )
 
     print("=" * 65)
