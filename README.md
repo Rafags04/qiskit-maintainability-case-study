@@ -1,17 +1,17 @@
-# Análisis estático de métricas cuánticas
+# Static Analysis of Quantum Metrics
 
-Este repositorio contiene código fuente de algoritmos cuánticos para realizar
-análisis estático de métricas cuánticas. Los algoritmos proceden del repositorio
-[QCRAFT-Scheduler](https://github.com/Qcraft-UEx/QCRAFT-Scheduler) y se conservan
-sin modificaciones.
+This repository contains quantum algorithm source code for static analysis of
+quantum metrics. The algorithms come from the
+[QCRAFT-Scheduler repository](https://github.com/Qcraft-UEx/QCRAFT-Scheduler)
+and are preserved without modifications.
 
-El propósito de este proyecto se limita al análisis estático del código. No es
-un ejecutor de los algoritmos, no realiza simulaciones ni envía circuitos a
-hardware cuántico.
+The scope of this project is limited to static code analysis. It is not an
+algorithm runner, does not perform simulations, and does not submit circuits
+to quantum hardware.
 
-## Código analizado
+## Analyzed Source Code
 
-Los archivos de algoritmos están en `algorithms/`:
+The algorithm files are located in `algorithms/`:
 
 - `bernstein_vazirani.py`
 - `Deutsch_Jozsa.py`
@@ -22,6 +22,6 @@ Los archivos de algoritmos están en `algorithms/`:
 - `teleportation.py`
 - `tsp.py`
 
-Este repositorio no incluye una herramienta de análisis ni un comando de
-ejecución. El análisis estático debe realizarse con la herramienta y el flujo
-de trabajo de métricas cuánticas correspondientes.
+This repository does not include an analysis tool or an execution command.
+Static analysis should be performed using the relevant quantum metrics tool
+and workflow.
