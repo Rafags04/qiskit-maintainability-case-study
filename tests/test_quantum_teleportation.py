@@ -2,7 +2,7 @@
 
 import unittest
 import numpy as np
-from algorithms.quantum_teleportation import (
+from algorithms.teleportation import (
     build_teleportation_circuit,
     run_teleportation,
 )

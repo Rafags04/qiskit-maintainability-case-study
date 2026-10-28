@@ -18,10 +18,10 @@ import numpy as np
 from algorithms.bernstein_vazirani import run_bernstein_vazirani
 from algorithms.deutsch_jozsa import run_deutsch_jozsa
 from algorithms.grover import run_grover
-from algorithms.quantum_phase_estimation import run_qpe
+from algorithms.phase_estimation import run_qpe
 from algorithms.shor import run_shor
 from algorithms.simon import run_simon
-from algorithms.quantum_teleportation import run_teleportation
+from algorithms.teleportation import run_teleportation
 from algorithms.tsp import run_tsp_qaoa
 
 

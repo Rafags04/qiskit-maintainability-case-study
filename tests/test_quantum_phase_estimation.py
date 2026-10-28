@@ -1,7 +1,7 @@
 """Unit tests for Quantum Phase Estimation (QPE)."""
 
 import unittest
-from algorithms.quantum_phase_estimation import (
+from algorithms.phase_estimation import (
     build_qpe_circuit,
     run_qpe,
 )
